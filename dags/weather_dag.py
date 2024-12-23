@@ -9,8 +9,8 @@ end_date = "2020-12-23"
 
 DB_URL = "postgresql://postgres:postgres@localhost:5432/test"
 
-@flow(log_prints=True)
-def pipeline_flow():
+@flow(log_prints=True, name="weather_pipeline")
+def flow_function():
     weather_data = fetch_weather_api()
     if weather_data:
         final_data = transform_weather_data(weather_data)
@@ -59,4 +59,4 @@ def load_weather_data(final_data):
 
 
 if __name__ == "__main__":
-    pipeline_flow()
+    flow_function()
