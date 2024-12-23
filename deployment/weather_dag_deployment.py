@@ -10,5 +10,5 @@ if __name__ == "__main__":
     ).deploy(
         name="weather-dag-deployment",
         work_pool_name="my-work-pool", # Work pool target
-        cron="* * * * *",
+        cron="0 0 * * *",
     )

@@ -2,12 +2,10 @@ import requests
 import pandas as pd
 from sqlalchemy import create_engine
 from prefect import flow, task
+from datetime import datetime, timedelta
+from variables import Variables
 
-API_KEY = "8D9GAHBFTMWGLR5P3BCXKUTXP"
-start_date = "2020-12-22"
-end_date = "2020-12-23"
-
-DB_URL = "postgresql://postgres:postgres@localhost:5432/test"
+variables = Variables()
 
 @flow(log_prints=True, name="weather_pipeline")
 def flow_function():
@@ -19,7 +17,11 @@ def flow_function():
 @task
 def fetch_weather_api():
     try:
-        url = f"""https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Myanmar/{start_date}/{end_date}?key={API_KEY}"""
+        today = datetime.today()
+        start_date = (today - timedelta(days=1)).strftime("%Y-%m-%d")
+        end_date = (today + timedelta(days=1)).strftime("%Y-%m-%d")
+        print(start_date, end_date)
+        url = f"""https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/Myanmar/{start_date}/{end_date}?key={variables.DB_URL}"""
         response = requests.get(url)
         if response.status_code == 200:
             weather_data = response.json()
@@ -40,14 +42,13 @@ def transform_weather_data(raw_data):
     df["sunset"] = df["sunset"]
     df["windspeed"] = pd.to_numeric(df["windspeed"])
     df["conditions"] = df["conditions"]
-    print(df.head())
     return df
 
 
 @task
 def load_weather_data(final_data):
     try:
-        engine = create_engine(DB_URL)
+        engine = create_engine(variables.DB_URL)
         with engine.connect() as conn:
             final_data.to_sql("weather_data", conn, if_exists="append", index=False)
         print("Data loaded successfully!")
